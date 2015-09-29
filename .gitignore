@@ -1,0 +1,9 @@
+*.pyc
+*.txt
+*.pdf
+*.eps
+*.zip
+GPATH
+GRTAGS
+GSYMS
+GTAGS
