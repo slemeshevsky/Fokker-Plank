@@ -3,18 +3,17 @@
 import sys, math
 import os, shutil
 
-xmin = xmax = -1.0
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('dirname', help='Path to directory with results')
+parser.add_argument('--xrange', nargs='+', type=float, default=[-0.1,-0.1],
+                    action='store', help="Range of x args")
+parser.add_argument('--ymin', default=-0.1, type=float, help='Min value of y')
+parser.add_argument('--logscale',default=False, action='store_true',
+                    help='Logscale in y or not')
 
-try:
-	dirname = sys.argv[1]; del sys.argv[1]
-except IndexError:
-	print 'Directory name is not specified!'
-	print 'Usage:', sys.argv[0], ' fulldirname [xmin xmax]'
-	sys.exit(1)
-
-while len(sys.argv) > 1:
-	xmin = float(sys.argv[1]); del sys.argv[1]
-	xmax = float(sys.argv[1]); del sys.argv[1]
+args = parser.parse_args()
+print args
 
 infilename1 = "RANGE.txt"
 infilename2 = "1D.txt"
@@ -24,7 +23,10 @@ outfilename1 = "rangedata.txt"
 outfilename2 = "1Ddata.txt"
 outfilename3 = "2Ddata.txt"
 
-os.chdir(dirname)
+print args.dirname
+
+os.chdir(args.dirname)
+
 try:
 	ifile1 = open(infilename1, 'r')  # open file for reading
 except:
@@ -80,7 +82,7 @@ for i in range(len(depth3)) :
     ofile3.write('%g  %12.5e\n' % (depth3[i],ions3[i]))
 ofile3.close()
 
-d = dirname.split('/')
+d = args.dirname.split('/')
 outputgraphname =  d[len(d)-1]
 
 # make file with gnuplot commands
@@ -89,12 +91,24 @@ f.write("""
 set terminal postscript eps enhanced
 set output '%s.ps'
 """ % outputgraphname)
-if(xmin >=0.0 and xmax >= 0.0):
-	f.write('set xrange [%g:%g]' % (xmin, xmax))
+print args.xrange
+
+if(args.xrange[0] >=0.0 and args.xrange[1] >= 0.0):
+	f.write('set xrange [%g:%g]\n' % (args.xrange[0], args.xrange[1]))
+
+print args.ymin
+if(args.ymin >= 0.0):
+	f.write('set yrange [%g:]\n' % (args.ymin))
+
+print args.logscale
+if(args.logscale):
+	f.write('set logscale y\n')
+	f.write('set format y "%2.0t{/Symbol \327} 10^{%L}"')
+	
 f.write("""
-plot 'rangedata.txt' title 'SRIM' with linespoints lt rgb 'black', \
-'1Ddata.txt' title '1D' with lines lt rgb 'green', \
-'2Ddata.txt' title '2D' with lines lt rgb 'blue'
+plot 'rangedata.txt' title '(1)' with points, \
+'1Ddata.txt' title '(2)' with lines lt 2 lw 1, \
+'2Ddata.txt' title '(3)' with lines lt -1 lw 2
 """)
 f.close()
 
